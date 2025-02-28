@@ -75,7 +75,7 @@ MIN_SILENCE_LEN = 500          # Min silence duration (ms)
 
 ## Sample Output: 
 
-![image-20250228054409154](C:/Users/eddie/Desktop/errata/writethisdown/image-20250228054409154.png)
+<img src="C:/Users/eddie/Desktop/errata/writethisdown/image-20250228054409154.png" alt="image-20250228054409154" />
 
 ## Notes: 
 
