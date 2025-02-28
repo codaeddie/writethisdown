@@ -39,9 +39,6 @@ ENV/
 virtualenv/
 .venv/
 
-# upgit
-2025/02/
-
 # IDE files
 .idea/
 .vscode/
