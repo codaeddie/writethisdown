@@ -4,7 +4,6 @@ import pyaudio
 import wave
 import time
 import os
-import openai
 import pyautogui
 import numpy as np
 import json
@@ -16,12 +15,13 @@ import tempfile
 import queue
 import sys
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Configure OpenAI API
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Audio recording settings
 FORMAT = pyaudio.paInt16
@@ -51,14 +51,16 @@ def start_recording():
     recording = True
     print("Recording started...")
     
-    # Flash indication that recording has started
-    pyautogui.write("[Recording started...]")
-    
     # Start the recording thread
     threading.Thread(target=record_audio, daemon=True).start()
     
     # Start the processing thread
     threading.Thread(target=process_audio_queue, daemon=True).start()
+    
+    # Add a small delay before typing to prevent unexpected behavior
+    time.sleep(0.3)
+    # Flash indication that recording has started
+    pyautogui.write("[Recording]")
 
 def stop_recording():
     """Stop audio recording"""
@@ -66,8 +68,10 @@ def stop_recording():
     recording = False
     print("Recording stopped.")
     
+    # Add a small delay before typing to prevent unexpected behavior
+    time.sleep(0.3)
     # Flash indication that recording has stopped
-    pyautogui.write("\n[Recording stopped.]")
+    pyautogui.write("\n[Stopped]")
 
 def record_audio():
     """Record audio and add chunks to the queue"""
@@ -164,19 +168,20 @@ def transcribe_frames(frames):
     wf.close()
     
     try:
-        # Transcribe with Whisper API
+        # Transcribe with Whisper API (using new SDK syntax)
         with open(temp_filename, "rb") as audio_file:
-            transcript = openai.Audio.transcribe(
-                "whisper-1",
-                audio_file,
-                response_format="text"
+            transcript = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file
             )
         
         # Post-process the text
-        transcribed_text = format_text(transcript)
+        transcribed_text = format_text(transcript.text)
         
         # Type the processed text into the active window
         if transcribed_text.strip():
+            # Add a small pause before typing to ensure window focus is correct
+            time.sleep(0.1)
             pyautogui.write(transcribed_text + " ")
     
     except Exception as e:
@@ -293,7 +298,7 @@ def list_audio_devices():
 
 def main():
     print("Real-time Transcription Tool")
-    print("Press Ctrl+Shift+J to start/stop recording")
+    print("Press F10 to start/stop recording")
     print("The transcribed text will be typed into your active window")
     
     # Get preferred audio device
@@ -304,8 +309,8 @@ def main():
         print("No audio input device selected. Exiting.")
         return
     
-    # Register the hotkey
-    keyboard.add_hotkey('ctrl+shift+j', on_hotkey_press)
+    # Register the hotkey (using F10 as it's unlikely to conflict with other applications)
+    keyboard.add_hotkey('f10', on_hotkey_press)
     
     try:
         # Keep the program running
