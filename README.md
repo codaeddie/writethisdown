@@ -75,7 +75,7 @@ MIN_SILENCE_LEN = 500          # Min silence duration (ms)
 
 ## Sample Output: 
 
-![image-20250228054409154](C:/Users/eddie/Desktop/errata/writethisdown/image-20250228054409154.png)
+![image-20250228054409154.png](C:/Users/eddie/Desktop/errata/writethisdown/image-20250228054409154.png)
 
 ## Notes: 
 
@@ -83,4 +83,4 @@ MIN_SILENCE_LEN = 500          # Min silence duration (ms)
 - need to play around with the silence threshold and length to have it stall a bit while there is nothing said. 
     - maybe add “...” when nothing is picked up
     - maybe this is an oversight on my part and i need to use the mics default audio detection levels that already work well? 
-    - ![a picture of a woman with the words maybe it 's maybelline on the top](C:/Users/eddie/Desktop/errata/writethisdown/maybe-maybe-its-may-be-line.gif)
+    - ![maybe.gif](C:/Users/eddie/Desktop/errata/writethisdown/maybe.gif)
