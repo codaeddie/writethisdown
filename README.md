@@ -39,7 +39,7 @@ This tool automatically transcribes audio to text in your active text editor usi
 ## Features
 
 - **Device Selection**: Automatically uses your preferred microphone (HyperX)
-- **Global Hotkey**: Ctrl+Shift+J to start/stop recording
+- **Global Hotkey**: F10 to start/stop recording
 - **Real-time Processing**: Audio is captured and processed in chunks for low latency
 - **Smart Silence Detection**: Identifies natural pauses to improve transcription
 - **Automatic Formatting**: Basic text formatting for improved readability
@@ -72,3 +72,15 @@ CHUNK = 1024                   # Processing chunk size
 SILENCE_THRESHOLD = 300        # Amplitude threshold for silence
 MIN_SILENCE_LEN = 500          # Min silence duration (ms)
 ```
+
+## Sample Output: 
+
+![image-20250228054409154](C:/Users/eddie/Desktop/errata/writethisdown/image-20250228054409154.png)
+
+## Notes: 
+
+- Wtf is `MBC`???
+- need to play around with the silence threshold and length to have it stall a bit while there is nothing said. 
+    - maybe add “...” when nothing is picked up
+    - maybe this is an oversight on my part and i need to use the mics default audio detection levels that already work well? 
+    - <img src="C:/Users/eddie/Desktop/errata/writethisdown/maybe-maybe-its-may-be-line.gif" alt="a picture of a woman with the words maybe it 's maybelline on the top" style="zoom:33%;" />
