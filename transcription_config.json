@@ -1,0 +1,11 @@
+{
+  "format": 8,
+  "channels": 1,
+  "rate": 16000,
+  "chunk": 1024,
+  "hotkey": "f8",
+  "output_dir": "transcriptions",
+  "language": "en",
+  "auto_open": false,
+  "min_duration": 1.0
+} 
