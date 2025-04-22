@@ -81,3 +81,11 @@ If your mic isn't working:
 6. Shows transcription in terminal and saves to file
 
 That's literally it. No magic.
+
+## Maybe
+
+- Add desktop screen capture via live button 
+    - maybe highlighter tool? or cut out section to add @ time stamp of cut
+- ability to grab and link pages/apps/locations to text
+- a better way to store all the transcripts? 
+- overlay that is invisible to any video/call app? 
