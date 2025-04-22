@@ -1,91 +1,83 @@
-# WriteThisDown - Audio Transcription Tool
+# WriteThisDown
 
-A simple tool to record audio and transcribe it to text using OpenAI's Whisper API.
+Audio capture → OpenAI Whisper → Markdown. That's it.
 
-## Setup Instructions
+## What it actually does
 
-1. **Install dependencies**:
-   ```powershell
-   pip install -r requirements.txt
-   ```
-   
-   If you encounter issues with PyAudio installation:
-   ```powershell
-   pip install pipwin
-   pipwin install pyaudio
-   ```
+This code records audio from your mic when you hit F8, stops when you hit F8 again, then sends the audio to OpenAI's Whisper API to transcribe it. The transcription gets saved as a markdown file with a timestamp. Pretty straightforward.
 
-2. **Create a .env file** with your OpenAI API key:
-   ```
-   OPENAI_API_KEY=your_key_here
-   ```
+## Setup
 
-3. **Run the script**:
-   ```powershell
-   python transcription.py
-   ```
+```bash
+# Install the dependencies 
+pip install -r requirements.txt
 
-4. **Select your microphone** when prompted. The script will remember your choice for future sessions.
+# If PyAudio fails on Windows (it often does)
+pip install pipwin
+pipwin install pyaudio
 
-## Usage
+# Add your OpenAI API key to a .env file
+echo "OPENAI_API_KEY=your_actual_key_here" > .env
 
-1. Press **F8** to start recording (you'll see audio levels in real-time)
-2. Speak or play audio content
-3. Press **F8** again to stop recording and process the transcription
-4. The transcription will be saved to a dated Markdown file in the `transcriptions` directory
-5. Press **M** to access additional options (view saved transcriptions, toggle settings)
-6. Press **ESC** to exit the program
+# Run it
+python transcription.py
+```
 
-## Features
+First time you run it, you'll need to pick your mic. It'll remember your choice in `audio_config.json`.
 
-- **Device Selection**: Automatically uses your preferred microphone
-- **Global Hotkey**: F8 to start/stop recording
-- **Audio Level Meter**: Visual indicator of audio levels during recording
-- **Complete Recordings**: Records continuously, then processes the entire recording at once
-- **Automatic Formatting**: Basic text formatting for improved readability
-- **Markdown Output**: Saves transcriptions with titles and timestamps as Markdown files
-- **Terminal Feedback**: Shows recording status, processing progress, and final transcription
-- **File Management**: View and open saved transcriptions
-- **Configurable Settings**: Toggle auto-open files and other options
+## Controls
 
-## Menu Options
+- **F8**: Start/stop recording (you'll see audio levels in real-time)
+- **M**: Show menu options 
+- **ESC**: Quit
 
-Press **M** during the program to access additional options:
+The menu (press M) lets you:
 1. Start/stop recording (same as F8)
-2. View saved transcriptions
-3. Toggle auto-open files when transcription completes
-4. Exit the program
+2. View your saved transcriptions 
+3. Toggle auto-opening files when done
+4. Exit
 
-## Troubleshooting
+## Files that matter
 
-If your microphone isn't working:
-1. Run `python device_finder.py` to see all available audio devices
-2. Delete `audio_config.json` to reset your device preference
-3. Run the main script again to select a new input device
+- `transcription.py`: The actual program
+- `device_finder.py`: Detects/selects audio input devices
+- `audio_config.json`: Saves which mic you're using
+- `transcription_config.json`: Audio settings and preferences
+- `.env`: Your OpenAI API key
+- `transcriptions/`: Where your markdown files go
 
-## Files
+## Config options
 
-- `transcription.py`: Main transcription tool
-- `device_finder.py`: Standalone utility to list and select audio devices
-- `audio_config.json`: Stores your preferred audio device (created automatically)
-- `transcription_config.json`: Contains configuration settings
-- `.env`: Contains your OpenAI API key
-- `requirements.txt`: List of Python dependencies
-
-## Advanced Configuration
-
-You can modify the settings in `transcription_config.json` to adjust behavior:
+Edit `transcription_config.json` if you want to change settings:
 
 ```json
 {
   "format": 8,          // Audio format (8 = PyAudio.paInt16)
   "channels": 1,        // Mono audio
-  "rate": 16000,        // Sample rate (Hz)
+  "rate": 16000,        // Sample rate (Hz) 
   "chunk": 1024,        // Processing chunk size
-  "hotkey": "f8",       // Hotkey to start/stop recording
-  "output_dir": "transcriptions", // Directory to save output files
-  "language": "en",     // Language for transcription (default: English)
+  "hotkey": "f8",       // Key to start/stop recording
+  "output_dir": "transcriptions", // Where files get saved
+  "language": "en",     // Language for transcription
   "auto_open": false,   // Automatically open files when saved
   "min_duration": 1.0   // Minimum recording duration in seconds
 }
 ```
+
+## Troubleshooting
+
+If your mic isn't working:
+1. Run `python device_finder.py` to see all available audio devices
+2. Delete `audio_config.json` to reset your device preference
+3. Run the main script again and pick a different mic
+
+## How it works
+
+1. Records audio frames when F8 is pressed
+2. Shows audio levels while recording
+3. When F8 is pressed again, saves audio to temp WAV file
+4. Sends the WAV to OpenAI Whisper API
+5. Formats the returned text and saves as markdown
+6. Shows transcription in terminal and saves to file
+
+That's literally it. No magic.
