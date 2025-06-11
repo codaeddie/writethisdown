@@ -243,9 +243,43 @@ class TranscriptionTool:
             logger.error(f"Recording thread error: {e}")
             print(f"Recording thread error: {e}")
     
+    def transcribe_locally(self, audio_file_path):
+        """Fallback local transcription using faster-whisper"""
+        try:
+            print("Attempting local transcription with faster-whisper...")
+            
+            # Check if faster-whisper is installed
+            result = subprocess.run([sys.executable, '-c', 'import faster_whisper'], 
+                                  capture_output=True, text=True)
+            
+            if result.returncode != 0:
+                print("Installing faster-whisper...")
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'faster-whisper'])
+            
+            # Import after ensuring it's installed
+            from faster_whisper import WhisperModel
+            
+            # Initialize local model (downloads on first use)
+            model = WhisperModel("base", device="cpu")  # Use "cuda" if you have GPU
+            
+            segments, info = model.transcribe(audio_file_path, language=self.config['language'])
+            
+            # Combine all segments
+            transcription = " ".join([segment.text for segment in segments])
+            
+            logger.info("Local transcription completed successfully")
+            return transcription
+            
+        except Exception as e:
+            logger.error(f"Local transcription failed: {e}")
+            print(f"Local transcription failed: {e}")
+            return None
+    
     def process_recording(self):
-        """Process the entire recording at once"""
+        """Process the entire recording with smart fallback"""
         temp_filename = None
+        self._transcription_successful = False
+        
         try:
             # Create a temporary WAV file
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav:
@@ -262,44 +296,71 @@ class TranscriptionTool:
             wf.writeframes(b''.join(self.frames))
             wf.close()
             
-            # Transcribe the entire file
-            logger.info("Sending audio to OpenAI Whisper API...")
-            print("Sending audio to OpenAI for transcription...")
-            
-            with open(temp_filename, "rb") as audio_file:
+            # Check file size and warn if too large
+            file_size = os.path.getsize(temp_filename)
+            if file_size > 25 * 1024 * 1024:  # 25MB limit
+                print(f"WARNING: File size ({file_size / 1024 / 1024:.1f}MB) exceeds OpenAI limit (25MB)")
+                print("Falling back to local transcription...")
+                transcript_text = self.transcribe_locally(temp_filename)
+            else:
+                # Try OpenAI API first
+                logger.info("Sending audio to OpenAI Whisper API...")
+                print("Sending audio to OpenAI for transcription...")
+                
                 try:
-                    transcript = self.client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file,
-                        language=self.config['language']
-                    )
+                    with open(temp_filename, "rb") as audio_file:
+                        transcript = self.client.audio.transcriptions.create(
+                            model="whisper-1",
+                            file=audio_file,
+                            language=self.config['language']
+                        )
                     
-                    # Save the transcription
-                    if transcript.text and transcript.text.strip():
-                        saved_file = self.save_transcription(transcript.text)
-                        
-                        # Optionally open the file
-                        if self.config['auto_open'] and saved_file and os.path.exists(saved_file):
-                            self.open_file(saved_file)
-                    else:
-                        logger.warning("Received empty transcription from API")
-                        print("WARNING: Received empty transcription from API")
-                except Exception as e:
-                    logger.error(f"OpenAI API error: {e}")
-                    print(f"ERROR: OpenAI API error: {e}")
+                    transcript_text = transcript.text
+                    
+                except Exception as api_error:
+                    logger.error(f"OpenAI API error: {api_error}")
+                    print(f"OpenAI API failed: {api_error}")
+                    print("Falling back to local transcription...")
+                    transcript_text = self.transcribe_locally(temp_filename)
+            
+            # Process the transcription result
+            if transcript_text and transcript_text.strip():
+                self._transcription_successful = True
+                saved_file = self.save_transcription(transcript_text)
+                
+                if self.config['auto_open'] and saved_file and os.path.exists(saved_file):
+                    self.open_file(saved_file)
+            else:
+                logger.warning("Received empty transcription")
+                print("WARNING: Received empty transcription")
+                self._transcription_successful = False
         
         except Exception as e:
             logger.error(f"Error processing recording: {e}")
             print(f"ERROR: Error processing recording: {e}")
         
         finally:
-            # Clean up the temporary file
+            # Cleanup logic
             if temp_filename and os.path.exists(temp_filename):
-                try:
-                    os.unlink(temp_filename)
-                    logger.info("Cleaned up temporary file")
-                except Exception as e:
-                    logger.error(f"Error deleting temporary file: {e}")
+                if hasattr(self, '_transcription_successful') and self._transcription_successful:
+                    try:
+                        os.unlink(temp_filename)
+                        logger.info("Cleaned up temporary file after successful transcription")
+                    except Exception as e:
+                        logger.error(f"Error deleting temporary file: {e}")
+                else:
+                    # Save failed recording to transcriptions directory for manual processing
+                    failed_filename = os.path.join(self.config['output_dir'], f"failed_recording_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav")
+                    try:
+                        import shutil
+                        shutil.move(temp_filename, failed_filename)
+                        logger.info(f"Saved failed recording to: {failed_filename}")
+                        print(f"\nRecording saved for manual processing: {failed_filename}")
+                        print("You can try transcribing this file manually or with other tools.")
+                    except Exception as e:
+                        logger.error(f"Error saving failed recording: {e}")
+                        print(f"ERROR: Could not save recording file: {e}")
+                        print(f"Temp file location: {temp_filename}")
     
     def save_transcription(self, text):
         """Save the transcribed text to a file"""

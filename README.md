@@ -4,7 +4,7 @@ Audio capture → OpenAI Whisper → Markdown. That's it.
 
 ## What it actually does
 
-This code records audio from your mic when you hit F8, stops when you hit F8 again, then sends the audio to OpenAI's Whisper API to transcribe it. The transcription gets saved as a markdown file with a timestamp. Pretty straightforward.
+Records audio from your mic when you hit F8, stops when you hit F8 again, then transcribes it. First tries OpenAI's Whisper API, but automatically falls back to local faster-whisper if the API fails or files are too large. Saves transcriptions as markdown files with timestamps.
 
 ## Setup
 
@@ -39,7 +39,8 @@ The menu (press M) lets you:
 
 ## Files that matter
 
-- `transcription.py`: The actual program
+- `transcription.py`: Main program with smart API/local fallback
+- `quick_transcribe.py`: Manual tool for processing failed recordings
 - `device_finder.py`: Detects/selects audio input devices
 - `audio_config.json`: Saves which mic you're using
 - `transcription_config.json`: Audio settings and preferences
@@ -76,11 +77,23 @@ If your mic isn't working:
 1. Records audio frames when F8 is pressed
 2. Shows audio levels while recording
 3. When F8 is pressed again, saves audio to temp WAV file
-4. Sends the WAV to OpenAI Whisper API
-5. Formats the returned text and saves as markdown
-6. Shows transcription in terminal and saves to file
+4. Checks file size - if >25MB, uses local transcription
+5. Tries OpenAI Whisper API first
+6. If API fails, automatically falls back to local faster-whisper
+7. Formats the returned text and saves as markdown
+8. Shows transcription in terminal and saves to file
 
-That's literally it. No magic.
+**Smart fallback means it always works.** If API is down, quota exceeded, or files too big - local whisper kicks in automatically.
+
+## Manual recovery
+
+If something goes wrong, failed recordings get saved as `failed_recording_*.wav` in the transcriptions folder. Use `quick_transcribe.py` to manually process them:
+
+```bash
+python quick_transcribe.py
+```
+
+This finds the most recent failed recording and transcribes it locally.
 
 ## Maybe
 
